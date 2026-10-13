@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arya Bagal's Daily Progress Tracker & AI Copilot</title>
+    
+    <!-- External Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            bg: '#0b0c16',
+                            card: '#131527',
+                            cardHover: '#1c1f38',
+                            cyan: '#00f2fe',
+                            purple: '#9d4edf',
+                            pink: '#f72585',
+                            emerald: '#10b981',
+                            amber: '#fbbf24'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0c16;
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Stars Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Panel with Cyber Neon Border */
+        .cyber-panel {
+            background: rgba(19, 21, 39, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(157, 78, 223, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .cyber-panel:hover {
+            border-color: rgba(0, 242, 254, 0.35);
+        }
+
+        .cyber-card {
+            background: rgba(28, 31, 56, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cyber-card:hover {
+            border-color: #00f2fe;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .cyber-input {
+            background: rgba(11, 12, 22, 0.7);
+            border: 1px solid rgba(157, 78, 223, 0.3);
+            color: #f8fafc;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .cyber-input:focus {
+            border-color: #00f2fe;
+            box-shadow: 0 0 18px rgba(0, 242, 254, 0.4);
+            outline: none;
+            background: rgba(19, 21, 39, 0.9);
+        }
+
+        /* Neon Text Glow */
+        .neon-glow-cyan {
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+        }
+        .neon-glow-pink {
+            text-shadow: 0 0 12px rgba(247, 37, 133, 0.6);
+        }
+        .neon-glow-purple {
+            text-shadow: 0 0 12px rgba(157, 78, 223, 0.6);
+        }
+
+        /* Ambient Glowing Animated Orbs */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(140px);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.4;
+            animation: orbFloat 16s ease-in-out infinite alternate;
+        }
+
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 40px) scale(1.15); }
+            100% { transform: translate(-30px, 60px) scale(0.95); }
+        }
+
+        /* Strikethrough Animation */
+        .task-title-text {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .task-title-text.completed-strike {
+            color: #64748b;
+        }
+        .task-title-text.completed-strike::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #00f2fe, #f72585);
+            animation: strikethrough 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes strikethrough {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* Custom Animated Checkbox */
+        .custom-checkbox {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(157, 78, 223, 0.5);
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            background: rgba(11, 12, 22, 0.8);
+        }
+
+        .custom-checkbox:hover {
+            border-color: #00f2fe;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+        }
+
+        .custom-checkbox:checked {
+            background: linear-gradient(135deg, #00f2fe, #9d4edf);
+            border-color: transparent;
+            transform: scale(1.1);
+            box-shadow: 0 0 14px rgba(0, 242, 254, 0.6);
+        }
+
+        .custom-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Flame Flickering Animation */
+        .flame-glow {
+            animation: flamePulse 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes flamePulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)); }
+            100% { transform: scale(1.15); filter: drop-shadow(0 0 18px rgba(247, 37, 133, 0.9)); }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 12, 22, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00f2fe, #9d4edf);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="p-3 md:p-6 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="ambient-orb w-[450px] h-[450px] bg-cyber-purple/30 top-[-80px] left-[-100px]"></div>
+    <div class="ambient-orb w-[500px] h-[500px] bg-cyber-pink/20 bottom-[-120px] right-[-80px]" style="animation-delay: -5s;"></div>
+    <div class="ambient-orb w-[400px] h-[400px] bg-cyber-cyan/20 top-[30%] left-[30%]" style="animation-delay: -10s;"></div>
+
+    <div class="max-w-7xl mx-auto w-full space-y-6 flex-1 flex flex-col">
+        
+        <header class="cyber-panel rounded-2xl p-5 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="relative group cursor-pointer">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyber-cyan via-cyber-purple to-cyber-pink p-0.5 shadow-lg shadow-cyber-purple/40 group-hover:scale-105 transition-transform">
+                        <div class="w-full h-full bg-cyber-bg rounded-[14px] flex items-center justify-center">
+                            <span class="font-display font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan to-cyber-pink">AB</span>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-cyber-emerald border-2 border-cyber-bg flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 id="user-greeting" class="font-display text-xl md:text-2xl font-bold tracking-tight text-white neon-glow-cyan">
+                            Welcome back, Arya Bagal! ✨
+                        </h1>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyber-purple/20 text-cyber-cyan border border-cyber-purple/40">
+                            PRO ACTIVE
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5">High-Performance Focus & Daily Mastery Dashboard</p>
+                </div>
+            </div>
+
+            <!-- Top Controls -->
+            <div class="flex items-center gap-3 flex-wrap justify-center">
+                
+                <!-- Open Calendar Button -->
+                <button onclick="toggleCalendarModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-cyber-card text-cyber-cyan border border-cyber-cyan/40 hover:bg-cyber-cyan/10 hover:scale-105 transition-all flex items-center gap-2 shadow-md shadow-cyber-cyan/10">
+                    <svg class="w-4 h-4 text-cyber-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Daily History Calendar</span>
+                </button>
+
+                <!-- AI Drawer Button -->
+                <button onclick="toggleAiDrawer()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-cyber-purple via-cyber-pink to-cyber-cyan text-white shadow-lg shadow-cyber-purple/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4 animate-spin [animation-duration:6s]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span>Arya's AI Copilot</span>
+                </button>
+
+                <div class="text-right hidden sm:block border-l border-slate-800 pl-3">
+                    <p id="current-date" class="text-xs font-bold text-slate-200"></p>
+                    <p id="current-day" class="text-[10px] text-cyber-cyan font-semibold tracking-wide uppercase"></p>
+                </div>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Metric 1 -->
+            <div class="cyber-panel p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">Today's Goal Progress</p>
+                    <h3 id="stat-progress-percent" class="font-display text-2xl font-extrabold text-white mt-1 neon-glow-cyan">0%</h3>
+                    <p class="text-[11px] text-slate-400 mt-1"><span id="stat-pending-count" class="text-cyber-cyan font-bold">0</span> tasks pending</p>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Metric 2 -->
+            <div class="cyber-panel p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">Consecutive Streak</p>
+                    <div class="flex items-baseline space-x-1.5 mt-1">
+                        <h3 id="stat-streak-count" class="font-display text-2xl font-extrabold text-cyber-amber neon-glow-pink">0</h3>
+                        <span class="text-xs text-slate-400 font-medium">Days</span>
+                    </div>
+                    <p id="stat-streak-message" class="text-[11px] text-slate-400 mt-1">Keep crushing goals, Arya!</p>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-cyber-amber flame-glow">
+                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-1.033A10.87 10.87 0 005.15 6.649 10.88 10.88 0 002 14c0 5.523 4.477 10 10 10s10-4.477 10-10c0-2.316-.788-4.448-2.122-6.142a1 1 0 00-1.438-.078 10.932 10.932 0 01-6.045 4.773 1 1 0 00-.712 1.258c.22.753.332 1.545.332 2.361 0 .227-.01.452-.029.675a1 1 0 001.32.997 8.958 8.958 0 004.993-4.57 1 1 0 00-.181-1.127 1 1 0 00-.03-.03z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Metric 3 -->
+            <div class="cyber-panel p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">Tasks Completed</p>
+                    <h3 id="stat-tasks-count" class="font-display text-2xl font-extrabold text-cyber-emerald mt-1">0 / 0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Daily targets locked</p>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-cyber-emerald/10 border border-cyber-emerald/30 flex items-center justify-center text-cyber-emerald">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Metric 4 -->
+            <div class="cyber-panel p-5 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">Productivity Index</p>
+                    <h3 id="stat-productivity-score" class="font-display text-2xl font-extrabold text-cyber-purple mt-1 neon-glow-purple">0%</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">7-day rolling efficiency</p>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+            
+            <!-- Column 1: Task Management Section (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col space-y-4">
+                <div class="cyber-panel rounded-2xl p-5 md:p-6 flex-1 flex flex-col">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                        <div>
+                            <h2 class="font-display text-lg font-bold text-white flex items-center gap-2">
+                                <span>Arya's Daily Focus Targets</span>
+                                <span id="task-badge" class="px-2.5 py-0.5 text-[11px] rounded-full bg-cyber-purple/20 text-cyber-cyan border border-cyber-purple/30 font-bold">0 Total</span>
+                            </h2>
+                            <p class="text-xs text-slate-400">Manage tasks or let Arya's AI Copilot auto-add commands</p>
+                        </div>
+
+                        <!-- Task Filters -->
+                        <div class="flex p-1 bg-cyber-bg rounded-xl border border-slate-800 self-start sm:self-auto">
+                            <button onclick="setTaskFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-cyber-purple to-cyber-pink shadow-md">All</button>
+                            <button onclick="setTaskFilter('pending')" id="filter-pending" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Pending</button>
+                            <button onclick="setTaskFilter('completed')" id="filter-completed" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Done</button>
+                        </div>
+                    </div>
+
+                    <!-- Direct Task Entry Form -->
+                    <form onsubmit="handleAddTask(event)" class="flex gap-2 mb-5">
+                        <input type="text" id="task-input" placeholder="Type a task title for Arya Bagal..." class="cyber-input flex-1 px-4 py-3 rounded-xl text-xs placeholder:text-slate-500">
+                        <select id="task-priority" class="cyber-input px-3 py-3 rounded-xl text-xs font-semibold cursor-pointer">
+                            <option value="low" class="bg-cyber-bg text-slate-200">Low</option>
+                            <option value="medium" selected class="bg-cyber-bg text-slate-200">Medium</option>
+                            <option value="high" class="bg-cyber-bg text-slate-200">High</option>
+                        </select>
+                        <button type="submit" class="px-5 py-3 rounded-xl bg-gradient-to-r from-cyber-cyan to-cyber-purple text-black font-extrabold text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 shadow-md shadow-cyber-cyan/20">
+                            <span>Add</span>
+                        </button>
+                    </form>
+
+                    <!-- Task List Box -->
+                    <div id="tasks-container" class="space-y-2.5 overflow-y-auto max-h-[380px] pr-1 flex-1">
+                        <!-- Dynamic JavaScript insertion -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2: Habits & Analytics Section (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col space-y-6">
+                
+                <!-- Tracked Habits Box -->
+                <div class="cyber-panel rounded-2xl p-5 md:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="font-display text-base font-bold text-white">Daily Habit Trackers</h2>
+                            <p class="text-xs text-slate-400">Consistency building block</p>
+                        </div>
+                        <button onclick="openAddHabitModal()" class="text-xs px-3 py-1.5 rounded-lg bg-cyber-emerald/10 text-cyber-emerald border border-cyber-emerald/30 hover:bg-cyber-emerald/20 transition-all font-bold">
+                            + New Habit
+                        </button>
+                    </div>
+
+                    <div id="habits-container" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                        <!-- Dynamic Habit Rows -->
+                    </div>
+                </div>
+
+                <!-- Productive Analytics Box -->
+                <div class="cyber-panel rounded-2xl p-5 md:p-6 flex-1 flex flex-col justify-between">
+                    <h2 class="font-display text-base font-bold text-white mb-1">Weekly Output Trajectory</h2>
+                    <div class="h-44 relative mt-2">
+                        <canvas id="productivityChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <section class="cyber-panel rounded-2xl p-5 md:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <div>
+                    <h2 class="font-display text-base font-bold text-white">Arya's Consistency Heatmap</h2>
+                    <p class="text-xs text-slate-400">70-Day completion intensity matrix</p>
+                </div>
+                <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
+                    <span>Low</span>
+                    <div class="w-3 h-3 rounded bg-slate-900 border border-slate-800"></div>
+                    <div class="w-3 h-3 rounded bg-cyber-purple/30 border border-cyber-purple/50"></div>
+                    <div class="w-3 h-3 rounded bg-cyber-purple border border-cyber-purple"></div>
+                    <div class="w-3 h-3 rounded bg-cyber-cyan border border-cyber-cyan shadow-sm shadow-cyber-cyan"></div>
+                    <span>High</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto pb-2">
+                <div id="habit-matrix" class="min-w-[680px] grid grid-rows-7 grid-flow-col gap-1.5">
+                    <!-- Dynamic matrix square insertion -->
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center py-4 border-t border-slate-800/80">
+            <p class="font-display text-xs md:text-sm font-bold tracking-wider text-slate-300">
+                Made with ❤️ by <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-cyber-purple to-cyber-pink neon-glow-cyan">Arya Bagal</span>
+            </p>
+        </footer>
+
+    </div>
+
+    <div id="ai-drawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-cyber-bg/95 backdrop-blur-2xl border-l border-cyber-purple/40 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+        
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-cyber-card">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyber-cyan to-cyber-purple flex items-center justify-center text-black font-extrabold text-sm shadow-md shadow-cyber-cyan/20">
+                    ⚡
+                </div>
+                <div>
+                    <h3 class="font-display text-sm font-bold text-white flex items-center gap-2">
+                        <span>Arya's AI Copilot</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded bg-cyber-emerald/20 text-cyber-emerald border border-cyber-emerald/30 font-bold">Auto-Exec Engine</span>
+                    </h3>
+                    <p class="text-[11px] text-slate-400">Direct Command & Auto-Task Manager</p>
+                </div>
+            </div>
+            <button onclick="toggleAiDrawer()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Optional Gemini API Key Drawer Input -->
+        <div class="px-5 py-2 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-[11px]">
+            <span class="text-slate-400">Optional Gemini Key:</span>
+            <input type="password" id="custom-api-key" placeholder="Paste key or use offline fallback..." class="cyber-input px-2.5 py-1 rounded-lg text-[10px] w-48 text-right font-mono text-slate-300">
+        </div>
+
+        <!-- AI Messages Window -->
+        <div id="ai-chat-messages" class="flex-1 p-5 overflow-y-auto space-y-4">
+            <div class="flex items-start gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-cyber-purple/30 border border-cyber-purple/50 flex items-center justify-center text-cyber-cyan text-xs font-bold shrink-0">
+                    AI
+                </div>
+                <div class="cyber-card p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-200 space-y-2 max-w-[85%]">
+                    <p>Hello <strong>Arya Bagal</strong>! I am your auto-exec AI Copilot.</p>
+                    <p class="text-slate-400 text-[11px]">Type commands like <em>"add task Study Machine Learning high priority"</em> or <em>"add habit Drink 3L Water"</em> and I will **automatically add them** to your dashboard right away!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick AI Suggest Prompts -->
+        <div class="px-5 py-3 border-t border-slate-800 bg-slate-950/60 space-y-2">
+            <p class="text-[9px] uppercase font-bold tracking-widest text-slate-500">Instant Commands for Arya</p>
+            <div class="flex flex-wrap gap-1.5">
+                <button onclick="sendQuickPrompt('add task Build AI Portfolio project high priority')" class="px-2.5 py-1 rounded-lg text-[10px] bg-cyber-purple/20 hover:bg-cyber-purple/40 text-cyber-cyan border border-cyber-purple/30 transition-all font-semibold">
+                    ⚡ Auto-Add High Priority Task
+                </button>
+                <button onclick="sendQuickPrompt('add habit Read Technical Research 30 mins')" class="px-2.5 py-1 rounded-lg text-[10px] bg-cyber-pink/20 hover:bg-cyber-pink/40 text-cyber-pink border border-cyber-pink/30 transition-all font-semibold">
+                    🌱 Auto-Add Habit
+                </button>
+            </div>
+        </div>
+
+        <!-- AI Command Input Bar -->
+        <form onsubmit="handleAiSubmit(event)" class="p-4 border-t border-slate-800 bg-cyber-bg flex gap-2">
+            <input type="text" id="ai-input" placeholder="e.g. add task Study React Native high priority..." class="cyber-input flex-1 px-3.5 py-2.5 rounded-xl text-xs">
+            <button type="submit" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyber-cyan to-cyber-purple text-black font-extrabold text-xs transition-all shadow-md shadow-cyber-cyan/20">
+                Send
+            </button>
+        </form>
+    </div>
+
+    <div id="calendar-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="cyber-panel p-6 rounded-3xl w-full max-w-lg border border-cyber-purple/40 shadow-2xl transform scale-95 transition-transform duration-300" id="calendar-modal-content">
+            
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-display text-base font-bold text-white flex items-center gap-2">
+                        <span>Arya's Daily History Calendar</span>
+                    </h3>
+                    <p class="text-xs text-slate-400">Click any date to view tasks, habits & logs</p>
+                </div>
+                <button onclick="toggleCalendarModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Month & Year Switcher -->
+            <div class="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800 mb-4">
+                <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h4 id="calendar-month-year" class="font-display text-sm font-bold text-cyber-cyan">October 2026</h4>
+                <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendar-days-grid" class="grid grid-cols-7 gap-1.5 mb-4">
+                <!-- Dynamically filled dates -->
+            </div>
+
+            <!-- Selected Date Breakdown Box -->
+            <div id="date-details-box" class="cyber-card p-4 rounded-2xl border border-slate-800 bg-slate-950/80 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h5 id="selected-date-title" class="font-display text-xs font-bold text-cyber-cyan">October 13, 2026 Summary</h5>
+                    <span id="selected-date-score" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyber-emerald/20 text-cyber-emerald border border-cyber-emerald/30">100% Completed</span>
+                </div>
+                <div class="space-y-1.5 text-xs text-slate-300">
+                    <p id="selected-date-tasks" class="text-[11px] font-medium text-slate-400">Tasks: None logged</p>
+                    <p id="selected-date-habits" class="text-[11px] font-medium text-slate-400">Habits: None logged</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Habit Modal -->
+    <div id="habit-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+        <div class="cyber-panel p-6 rounded-3xl w-full max-w-md border border-slate-800 shadow-2xl transform scale-95 transition-transform duration-300" id="habit-modal-content">
+            <h3 class="font-display text-base font-bold text-white mb-1">Create New Habit for Arya Bagal</h3>
+            <p class="text-xs text-slate-400 mb-4">Small daily actions yield high returns.</p>
+            
+            <form onsubmit="handleCreateHabit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Habit Title</label>
+                    <input type="text" id="habit-name-input" required placeholder="e.g. Drink 3L Water, Evening Read" class="cyber-input w-full px-3.5 py-2.5 rounded-xl text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Emoji Icon</label>
+                    <input type="text" id="habit-icon-input" maxlength="2" placeholder="💧, 📚, 🧘, 🏋️" class="cyber-input w-full px-3.5 py-2.5 rounded-xl text-xs">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddHabitModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-cyber-cyan text-black font-extrabold text-xs shadow-md shadow-cyber-cyan/20">Create Habit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-6 z-50 px-4 py-3 rounded-xl cyber-panel text-xs font-semibold text-white border border-cyber-cyan/40 flex items-center gap-2.5 transform translate-y-24 opacity-0 transition-all duration-300 shadow-xl shadow-cyber-cyan/10">
+        <span id="toast-icon" class="text-sm">✨</span>
+        <span id="toast-msg">Action completed</span>
+    </div>
+
+    <script>
+        // Core Application State for Arya Bagal
+        let appData = {
+            userName: "Arya Bagal",
+            tasks: [],
+            habits: [],
+            history: {},
+            streak: 0,
+            lastActiveDate: null
+        };
+
+        let currentFilter = 'all';
+        let chartInstance = null;
+        let calendarCurrentDate = new Date();
+
+        // Background Star/Particle Canvas Engine
+        function initBgCanvas() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let stars = [];
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+                createStars();
+            }
+
+            function createStars() {
+                stars = [];
+                const count = Math.floor((width * height) / 8000);
+                for (let i = 0; i < count; i++) {
+                    stars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        radius: Math.random() * 1.5 + 0.3,
+                        alpha: Math.random() * 0.8 + 0.2,
+                        speed: Math.random() * 0.02 + 0.005
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                stars.forEach(star => {
+                    star.alpha += Math.sin(Date.now() * star.speed) * 0.01;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(star.alpha)})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        }
+
+        // Particle Burst Effect for Accomplishment
+        function triggerParticleBurst() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 45,
+                    spread: 60,
+                    origin: { y: 0.8 },
+                    colors: ['#00f2fe', '#9d4edf', '#f72585', '#10b981']
+                });
+            }
+        }
+
+        // Application Initialization
+        window.onload = function() {
+            initBgCanvas();
+            loadLocalStorage();
+            checkAndHandleDateChange();
+            updateDateHeader();
+            renderAll();
+            initChart();
+        };
+
+        function getTodayString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function updateDateHeader() {
+            const now = new Date();
+            const options = { month: 'long', day: 'numeric', year: 'numeric' };
+            const dayOptions = { weekday: 'long' };
+            document.getElementById('current-date').innerText = now.toLocaleDateString('en-US', options);
+            document.getElementById('current-day').innerText = now.toLocaleDateString('en-US', dayOptions);
+
+            document.getElementById('user-greeting').innerText = "Welcome back, Arya Bagal! ✨";
+        }
+
+        function checkAndHandleDateChange() {
+            const today = getTodayString();
+            if (!appData.lastActiveDate) {
+                appData.lastActiveDate = today;
+            } else if (appData.lastActiveDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+                if (appData.lastActiveDate !== yesterdayStr) {
+                    appData.streak = 0;
+                }
+
+                appData.tasks.forEach(task => task.completed = false);
+                appData.lastActiveDate = today;
+                saveLocalStorage();
+            }
+        }
+
+        function loadLocalStorage() {
+            const saved = localStorage.getItem('arya_bagal_tracker_data_v2');
+            if (saved) {
+                try {
+                    appData = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Error loading data", e);
+                }
+            }
+
+            if (!appData.tasks || appData.tasks.length === 0) {
+                appData.tasks = [
+                    { id: '1', title: 'Study Machine Learning & Neural Networks', priority: 'high', completed: false },
+                    { id: '2', title: 'Complete 45-Min Workout & Stretch', priority: 'medium', completed: true },
+                    { id: '3', title: 'Review Arya\'s AI Copilot Codebase', priority: 'high', completed: false }
+                ];
+            }
+
+            if (!appData.habits || appData.habits.length === 0) {
+                appData.habits = [
+                    { id: 'h1', name: 'Drink 3L Hydration', icon: '💧', completedDates: [getTodayString()] },
+                    { id: 'h2', name: 'Morning Focus Session', icon: '🧘', completedDates: [] },
+                    { id: 'h3', name: 'Tech Paper Reading', icon: '📚', completedDates: [getTodayString()] }
+                ];
+            }
+
+            if (!appData.history) appData.history = {};
+            calculateStreak();
+        }
+
+        function saveLocalStorage() {
+            localStorage.setItem('arya_bagal_tracker_data_v2', JSON.stringify(appData));
+        }
+
+        function handleAddTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('task-input');
+            const prioritySelect = document.getElementById('task-priority');
+            const title = input.value.trim();
+
+            if (!title) return;
+
+            addNewTaskDirect(title, prioritySelect.value);
+            input.value = '';
+        }
+
+        function addNewTaskDirect(title, priority = 'medium') {
+            const newTask = {
+                id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
+                title: title,
+                priority: priority.toLowerCase(),
+                completed: false
+            };
+
+            appData.tasks.unshift(newTask);
+            saveLocalStorage();
+            updateDailyHistory();
+            renderAll();
+            showToast(`Task added: "${title.substring(0, 20)}..."`, "✨");
+        }
+
+        function toggleTask(id) {
+            const task = appData.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                if (task.completed) {
+                    triggerParticleBurst();
+                }
+                saveLocalStorage();
+                updateDailyHistory();
+                calculateStreak();
+                renderAll();
+            }
+        }
+
+        function deleteTask(id) {
+            appData.tasks = appData.tasks.filter(t => t.id !== id);
+            saveLocalStorage();
+            updateDailyHistory();
+            renderAll();
+            showToast("Task removed", "🗑️");
+        }
+
+        function setTaskFilter(filter) {
+            currentFilter = filter;
+            ['all', 'pending', 'completed'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-cyber-purple to-cyber-pink shadow-md";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white";
+                }
+            });
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+
+            let filteredTasks = appData.tasks;
+            if (currentFilter === 'pending') filteredTasks = appData.tasks.filter(t => !t.completed);
+            if (currentFilter === 'completed') filteredTasks = appData.tasks.filter(t => t.completed);
+
+            document.getElementById('task-badge').innerText = `${appData.tasks.length} Total`;
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 border border-dashed border-slate-800 rounded-xl">
+                        <p class="text-xs text-slate-500 font-medium">No tasks found for Arya in this view.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const priorityColors = {
+                    high: 'text-cyber-pink bg-cyber-pink/10 border-cyber-pink/30',
+                    medium: 'text-cyber-amber bg-amber-500/10 border-amber-500/30',
+                    low: 'text-cyber-emerald bg-cyber-emerald/10 border-cyber-emerald/30'
+                };
+
+                const card = document.createElement('div');
+                card.className = `cyber-card p-3 rounded-xl flex items-center justify-between gap-2.5 ${task.completed ? 'opacity-60' : ''}`;
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" class="custom-checkbox shrink-0">
+                        <span class="text-xs font-semibold task-title-text ${task.completed ? 'completed-strike' : 'text-slate-200'} truncate">
+                            ${escapeHtml(task.title)}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border font-bold ${priorityColors[task.priority] || priorityColors.medium}">
+                            ${task.priority || 'medium'}
+                        </span>
+                        <button onclick="deleteTask('${task.id}')" class="p-1 rounded text-slate-500 hover:text-cyber-pink hover:bg-cyber-pink/10 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openAddHabitModal() {
+            const modal = document.getElementById('habit-modal');
+            const content = document.getElementById('habit-modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAddHabitModal() {
+            const modal = document.getElementById('habit-modal');
+            const content = document.getElementById('habit-modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function handleCreateHabit(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('habit-name-input');
+            const iconInput = document.getElementById('habit-icon-input');
+
+            const name = nameInput.value.trim();
+            const icon = iconInput.value.trim() || '🔥';
+
+            if (!name) return;
+
+            addNewHabitDirect(name, icon);
+            nameInput.value = '';
+            iconInput.value = '';
+            closeAddHabitModal();
+        }
+
+        function addNewHabitDirect(name, icon = '🔥') {
+            const newHabit = {
+                id: 'h_' + Date.now() + Math.random().toString(36).substring(2, 5),
+                name: name,
+                icon: icon,
+                completedDates: []
+            };
+
+            appData.habits.push(newHabit);
+            saveLocalStorage();
+            renderAll();
+            showToast(`New habit added: ${icon} ${name}`, "🎯");
+        }
+
+        function toggleHabitToday(habitId) {
+            const today = getTodayString();
+            const habit = appData.habits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            if (!habit.completedDates) habit.completedDates = [];
+
+            const index = habit.completedDates.indexOf(today);
+            if (index > -1) {
+                habit.completedDates.splice(index, 1);
+            } else {
+                habit.completedDates.push(today);
+                triggerParticleBurst();
+            }
+
+            saveLocalStorage();
+            updateDailyHistory();
+            calculateStreak();
+            renderAll();
+        }
+
+        function deleteHabit(habitId) {
+            appData.habits = appData.habits.filter(h => h.id !== habitId);
+            saveLocalStorage();
+            updateDailyHistory();
+            renderAll();
+            showToast("Habit deleted", "🗑️");
+        }
+
+        function renderHabits() {
+            const container = document.getElementById('habits-container');
+            container.innerHTML = '';
+            const today = getTodayString();
+
+            if (appData.habits.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 border border-dashed border-slate-800 rounded-xl">
+                        <p class="text-xs text-slate-500">No habits tracked yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            appData.habits.forEach(habit => {
+                const isCompletedToday = (habit.completedDates || []).includes(today);
+                const streakCount = (habit.completedDates || []).length;
+
+                const card = document.createElement('div');
+                card.className = "cyber-card p-2.5 rounded-xl flex items-center justify-between";
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl cursor-pointer">${habit.icon}</span>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">${escapeHtml(habit.name)}</h4>
+                            <p class="text-[10px] text-slate-400 font-medium">${streakCount} check-ins</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="toggleHabitToday('${habit.id}')" class="px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                            isCompletedToday 
+                            ? 'bg-cyber-emerald/20 text-cyber-emerald border border-cyber-emerald/40 shadow-sm shadow-cyber-emerald/20' 
+                            : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        }">
+                            ${isCompletedToday ? '✓ Done' : 'Check in'}
+                        </button>
+                        <button onclick="deleteHabit('${habit.id}')" class="p-1 rounded text-slate-600 hover:text-cyber-pink hover:bg-cyber-pink/10 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderConsistencyMatrix() {
+            const matrixContainer = document.getElementById('habit-matrix');
+            matrixContainer.innerHTML = '';
+
+            const daysToShow = 70;
+            const today = new Date();
+
+            for (let i = daysToShow - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+
+                const historyRecord = appData.history[dateStr] || { completedTasks: 0 };
+                let habitCompletions = 0;
+                appData.habits.forEach(h => {
+                    if ((h.completedDates || []).includes(dateStr)) habitCompletions++;
+                });
+
+                const totalActivity = (historyRecord.completedTasks || 0) + habitCompletions;
+
+                let bgClass = 'bg-slate-900 border-slate-800';
+                if (totalActivity === 1) bgClass = 'bg-cyber-purple/30 border-cyber-purple/50';
+                else if (totalActivity === 2) bgClass = 'bg-cyber-purple border-cyber-purple';
+                else if (totalActivity >= 3) bgClass = 'bg-cyber-cyan border-cyber-cyan shadow-sm shadow-cyber-cyan';
+
+                const square = document.createElement('div');
+                square.className = `w-3.5 h-3.5 rounded-sm border ${bgClass} relative group cursor-pointer`;
+                
+                const formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                square.innerHTML = `
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 bg-slate-950 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 border border-slate-800">
+                        ${formattedDate}: ${totalActivity} finished
+                    </div>
+                `;
+
+                matrixContainer.appendChild(square);
+            }
+        }
+
+        function updateDailyHistory() {
+            const today = getTodayString();
+            const completedTasks = appData.tasks.filter(t => t.completed).length;
+            const totalTasks = appData.tasks.length;
+            
+            let completedHabits = 0;
+            appData.habits.forEach(h => {
+                if ((h.completedDates || []).includes(today)) completedHabits++;
+            });
+
+            appData.history[today] = { completedTasks, totalTasks, completedHabits };
+            saveLocalStorage();
+        }
+
+        function calculateStreak() {
+            let streak = 0;
+            const today = new Date();
+
+            for (let i = 0; i < 365; i++) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+
+                const record = appData.history[dateStr];
+                let habitCount = 0;
+                appData.habits.forEach(h => {
+                    if ((h.completedDates || []).includes(dateStr)) habitCount++;
+                });
+
+                const totalActivity = (record ? (record.completedTasks || 0) : 0) + habitCount;
+
+                if (totalActivity > 0) {
+                    streak++;
+                } else if (i === 0) {
+                    continue; 
+                } else {
+                    break;
+                }
+            }
+
+            appData.streak = streak;
+            saveLocalStorage();
+        }
+
+        function updateDashboardStats() {
+            const totalTasks = appData.tasks.length;
+            const completedTasks = appData.tasks.filter(t => t.completed).length;
+            const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            document.getElementById('stat-progress-percent').innerText = `${progressPercent}%`;
+            document.getElementById('stat-tasks-count').innerText = `${completedTasks} / ${totalTasks}`;
+            document.getElementById('stat-pending-count').innerText = `${totalTasks - completedTasks}`;
+            document.getElementById('stat-streak-count').innerText = appData.streak;
+
+            let totalPossible7Days = 0;
+            let totalCompleted7Days = 0;
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+
+                const record = appData.history[dateStr] || { completedTasks: 0 };
+                let habitCount = 0;
+                appData.habits.forEach(h => {
+                    if ((h.completedDates || []).includes(dateStr)) habitCount++;
+                });
+
+                totalCompleted7Days += (record.completedTasks || 0) + habitCount;
+                totalPossible7Days += (appData.tasks.length || 1) + (appData.habits.length || 1);
+            }
+
+            const productivityScore = Math.min(100, Math.round((totalCompleted7Days / totalPossible7Days) * 100));
+            document.getElementById('stat-productivity-score').innerText = `${productivityScore}%`;
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('productivityChart').getContext('2d');
+            const labels = [];
+            const dataPoints = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+
+                const dateStr = d.toISOString().split('T')[0];
+                const record = appData.history[dateStr] || { completedTasks: 0 };
+                let habitCount = 0;
+                appData.habits.forEach(h => {
+                    if ((h.completedDates || []).includes(dateStr)) habitCount++;
+                });
+
+                dataPoints.push((record.completedTasks || 0) + habitCount);
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Completed Items',
+                        data: dataPoints,
+                        borderColor: '#00f2fe',
+                        backgroundColor: (context) => {
+                            const bg = context.chart.ctx.createLinearGradient(0, 0, 0, 180);
+                            bg.addColorStop(0, 'rgba(0, 242, 254, 0.35)');
+                            bg.addColorStop(1, 'rgba(0, 242, 254, 0.0)');
+                            return bg;
+                        },
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#9d4edf',
+                        pointBorderColor: '#ffffff',
+                        pointHoverRadius: 6,
+                        pointRadius: 3.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#64748b', font: { size: 9, weight: '600' } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#64748b', font: { size: 9, weight: '600' }, stepSize: 1 },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!chartInstance) return;
+
+            const dataPoints = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const record = appData.history[dateStr] || { completedTasks: 0 };
+                
+                let habitCount = 0;
+                appData.habits.forEach(h => {
+                    if ((h.completedDates || []).includes(dateStr)) habitCount++;
+                });
+
+                dataPoints.push((record.completedTasks || 0) + habitCount);
+            }
+
+            chartInstance.data.datasets[0].data = dataPoints;
+            chartInstance.update();
+        }
+
+        function renderAll() {
+            renderTasks();
+            renderHabits();
+            renderConsistencyMatrix();
+            updateDashboardStats();
+            updateChart();
+        }
+
+        function toggleAiDrawer() {
+            const drawer = document.getElementById('ai-drawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('ai-input').value = promptText;
+            handleAiSubmit(new Event('submit'));
+        }
+
+        // Automatic Execution AI Engine logic
+        async function handleAiSubmit(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('ai-input');
+            const prompt = inputEl.value.trim();
+            if (!prompt) return;
+
+            inputEl.value = '';
+            appendChatMessage('user', prompt);
+
+            const loadingId = 'loading_' + Date.now();
+            appendLoadingBubble(loadingId);
+
+            // Execute local parsing and automatic task/habit addition
+            setTimeout(() => {
+                removeBubble(loadingId);
+                const result = parseAndExecuteAiCommand(prompt);
+                appendAiParsedResponse(result);
+            }, 400);
+        }
+
+        function parseAndExecuteAiCommand(prompt) {
+            const lower = prompt.toLowerCase();
+            let replyText = "";
+            let addedItem = null;
+
+            if (lower.startsWith('add task') || lower.includes('task to') || lower.includes('add a task')) {
+                let title = prompt.replace(/add task|add a task|task to/gi, '').trim();
+                let priority = "medium";
+
+                if (lower.includes('high priority') || lower.includes('urgent')) {
+                    priority = "high";
+                    title = title.replace(/high priority|urgent/gi, '').trim();
+                } else if (lower.includes('low priority')) {
+                    priority = "low";
+                    title = title.replace(/low priority/gi, '').trim();
+                }
+
+                if (!title) title = "Focus Target for Arya";
+
+                addNewTaskDirect(title, priority);
+                replyText = `⚡ **Auto-Added Task for Arya Bagal**: "${title}" (${priority.toUpperCase()} Priority). Updated directly on your dashboard!`;
+                addedItem = { type: 'task', title, priority };
+            } 
+            else if (lower.startsWith('add habit') || lower.includes('habit to') || lower.includes('add a habit')) {
+                let habitTitle = prompt.replace(/add habit|add a habit|habit to/gi, '').trim();
+                let emoji = "🔥";
+
+                if (lower.includes('water') || lower.includes('drink')) emoji = "💧";
+                else if (lower.includes('read') || lower.includes('book')) emoji = "📚";
+                else if (lower.includes('workout') || lower.includes('gym')) emoji = "🏋️";
+
+                if (!habitTitle) habitTitle = "Daily Focus Practice";
+
+                addNewHabitDirect(habitTitle, emoji);
+                replyText = `🌱 **Auto-Added Habit for Arya Bagal**: ${emoji} "${habitTitle}". Updated directly on your habit list!`;
+                addedItem = { type: 'habit', name: habitTitle, icon: emoji };
+            } 
+            else {
+                replyText = `Hello Arya Bagal! You can tell me to auto-add tasks or habits like: *"add task Learn React high priority"* or *"add habit Drink 3L Water"*.`;
+            }
+
+            return { replyText, addedItem };
+        }
+
+        function appendChatMessage(role, text) {
+            const container = document.getElementById('ai-chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex items-start gap-2.5 " + (role === 'user' ? 'justify-end' : '');
+
+            if (role === 'user') {
+                wrapper.innerHTML = `
+                    <div class="cyber-card p-3 rounded-2xl rounded-tr-none text-xs text-white bg-cyber-purple/30 border-cyber-purple/40 max-w-[85%] font-medium">
+                        ${escapeHtml(text)}
+                    </div>
+                    <div class="w-7 h-7 rounded-lg bg-cyber-cyan text-black flex items-center justify-center text-xs font-bold shrink-0">
+                        AB
+                    </div>
+                `;
+            }
+
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendLoadingBubble(id) {
+            const container = document.getElementById('ai-chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.id = id;
+            wrapper.className = "flex items-start gap-2.5";
+            wrapper.innerHTML = `
+                <div class="w-7 h-7 rounded-lg bg-cyber-purple/30 border border-cyber-purple/50 flex items-center justify-center text-cyber-cyan text-xs shrink-0">
+                    AI
+                </div>
+                <div class="cyber-card p-3 rounded-2xl rounded-tl-none text-xs text-slate-400 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyber-cyan animate-bounce"></span>
+                    <span class="w-2 h-2 rounded-full bg-cyber-purple animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-2 h-2 rounded-full bg-cyber-pink animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+            `;
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeBubble(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function appendAiParsedResponse(parsed) {
+            const container = document.getElementById('ai-chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex items-start gap-2.5";
+
+            wrapper.innerHTML = `
+                <div class="w-7 h-7 rounded-lg bg-cyber-purple/30 border border-cyber-purple/50 flex items-center justify-center text-cyber-cyan text-xs font-bold shrink-0">
+                    AI
+                </div>
+                <div class="cyber-card p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-200 max-w-[85%] space-y-2">
+                    <p>${escapeHtml(parsed.replyText)}</p>
+                </div>
+            `;
+
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Daily History Calendar Logic
+        function toggleCalendarModal() {
+            const modal = document.getElementById('calendar-modal');
+            const content = document.getElementById('calendar-modal-content');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+                renderCalendar();
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            }
+        }
+
+        function changeCalendarMonth(delta) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-days-grid');
+            grid.innerHTML = '';
+
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Blank slots before start of month
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "h-8 rounded-lg bg-transparent";
+                grid.appendChild(emptyCell);
+            }
+
+            const todayStr = getTodayString();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateStr = dateObj.toISOString().split('T')[0];
+
+                const record = appData.history[dateStr];
+                let habitCount = 0;
+                appData.habits.forEach(h => {
+                    if ((h.completedDates || []).includes(dateStr)) habitCount++;
+                });
+
+                const totalActivity = (record ? (record.completedTasks || 0) : 0) + habitCount;
+
+                const dayBtn = document.createElement('button');
+                const isToday = dateStr === todayStr;
+
+                dayBtn.className = `h-9 rounded-xl flex flex-col items-center justify-center text-xs font-bold transition-all relative ${
+                    isToday 
+                    ? 'bg-cyber-cyan text-black shadow-md shadow-cyber-cyan/30' 
+                    : totalActivity > 0 
+                        ? 'bg-cyber-purple/30 text-cyber-cyan border border-cyber-purple/50' 
+                        : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800'
+                }`;
+
+                dayBtn.innerText = day;
+                if (totalActivity > 0 && !isToday) {
+                    dayBtn.innerHTML += `<span class="w-1 h-1 rounded-full bg-cyber-pink absolute bottom-1"></span>`;
+                }
+
+                dayBtn.onclick = () => showDateDetails(dateStr, day, monthNames[month], year, record, habitCount);
+                grid.appendChild(dayBtn);
+            }
+        }
+
+        function showDateDetails(dateStr, day, monthName, year, record, habitCount) {
+            const box = document.getElementById('date-details-box');
+            box.classList.remove('hidden');
+
+            document.getElementById('selected-date-title').innerText = `${monthName} ${day}, ${year} Activity`;
+
+            const completedTasks = record ? (record.completedTasks || 0) : 0;
+            const totalTasks = record ? (record.totalTasks || 0) : 0;
+
+            document.getElementById('selected-date-tasks').innerText = `Tasks completed: ${completedTasks} / ${totalTasks}`;
+            document.getElementById('selected-date-habits').innerText = `Habits checked in: ${habitCount}`;
+
+            const totalScore = (completedTasks + habitCount) > 0 ? "Active Day ✨" : "Rest / Inactive";
+            document.getElementById('selected-date-score').innerText = totalScore;
+        }
+
+        function showToast(msg, icon = "✨") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').innerText = icon;
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 2600);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
